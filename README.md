@@ -11,8 +11,8 @@ These are for maintainers (not required for normal users):
 
 ```bash
 # Build image
-docker build -t kimc1992/rustcost-frontend:latest .
+docker build -t kimc1992/rustcost-dashboard:tag .
 
 # Push to Docker Hub
-docker push kimc1992/rustcost-frontend:latest
+docker push kimc1992/rustcost-dashboard:tag
 ```
