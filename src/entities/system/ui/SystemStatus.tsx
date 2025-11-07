@@ -49,11 +49,11 @@ export const SystemStatus = () => {
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {t("system.status.title")}
           </h2>
-          {status.data?.status === "healthy" ? (
+          {status.data?.data?.status === "healthy" ? (
             <p className="text-sm text-emerald-600 dark:text-emerald-300">
               {t("system.status.healthy")}
             </p>
-          ) : status.data?.status === "degraded" ? (
+          ) : status.data?.data?.status === "degraded" ? (
             <p className="text-sm text-amber-600 dark:text-amber-300">
               {t("system.status.degraded")}
             </p>
@@ -91,9 +91,14 @@ export const SystemStatus = () => {
           {status.error instanceof Error ? status.error.message : String(status.error)}
         </div>
       )}
-      {status.data && (
+      {!status.isLoading && !status.error && (!status.data?.is_successful || !status.data?.data) && (
+        <div className="rounded-md border border-red-400 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-600 dark:bg-red-900/20 dark:text-red-200">
+          {status.data?.error_msg ?? "Failed to load status"}
+        </div>
+      )}
+      {status.data?.is_successful && status.data?.data && Array.isArray(status.data.data.components) && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {status.data.components.map((component) => (
+          {status.data.data.components.map((component) => (
             <div
               key={component.component}
               className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950/60"

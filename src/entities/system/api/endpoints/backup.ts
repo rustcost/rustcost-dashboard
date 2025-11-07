@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { request } from "../../../../shared/api/http";
 import { API_BASE_PATH } from "../../../../shared/api/constants";
-import type { BackupResponse } from "../types";
+import type { ApiResponse, BackupResponse } from "../types";
 
 const BACKUP_URL = `${API_BASE_PATH}/system/backup`;
 
@@ -16,7 +16,7 @@ export interface BackupPayload {
  * @param payload - Optional parameters to adjust backup behavior.
  */
 export const triggerSystemBackup = (payload?: BackupPayload) =>
-  request<BackupResponse>({
+  request<ApiResponse<BackupResponse>>({
     method: "POST",
     url: BACKUP_URL,
     data: payload ?? {},
@@ -26,7 +26,7 @@ export const triggerSystemBackup = (payload?: BackupPayload) =>
  * Hook returning a trigger function and state for system backup actions.
  */
 export const useSystemBackup = () => {
-  const [data, setData] = useState<BackupResponse | undefined>();
+  const [data, setData] = useState<ApiResponse<BackupResponse> | undefined>();
   const [error, setError] = useState<unknown>();
   const [isLoading, setIsLoading] = useState(false);
 

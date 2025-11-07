@@ -77,3 +77,47 @@ export interface SettingsConfiguration {
 }
 
 export type InfoQueryParams = Record<string, string | number | boolean | undefined>;
+
+// Mirrors backend InfoSettingEntity (snake_case fields)
+export interface InfoSetting {
+  // General & UI
+  is_dark_mode: boolean;
+  language: string;
+
+  // Retention
+  minute_retention_days: number;
+  hour_retention_months: number;
+  day_retention_years: number;
+  retention_policy: string; // "delete" | "archive"
+
+  // File-based Persistence Options
+  enable_line_num_tracking: boolean;
+  enable_index_file: boolean;
+  max_storage_gb: number;
+  compression_enabled: boolean;
+
+  // Metrics Collection
+  scrape_interval_sec: number;
+  metrics_batch_size: number;
+  enable_gpu_metrics: boolean;
+  enable_network_metrics: boolean;
+
+  // Alerts & Notifications
+  enable_cluster_health_alert: boolean;
+  enable_rustcost_health_alert: boolean;
+  global_alert_subject: string;
+  linkback_url?: string | null;
+  email_recipients: string[];
+  slack_webhook_url?: string | null;
+  teams_webhook_url?: string | null;
+
+  // LLM Integration
+  llm_url?: string | null;
+  llm_token?: string | null;
+  llm_model?: string | null;
+
+  // Metadata
+  created_at: string; // ISO timestamp
+  updated_at: string; // ISO timestamp
+  version: string;
+}

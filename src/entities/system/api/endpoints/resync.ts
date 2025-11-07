@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { request } from "../../../../shared/api/http";
 import { API_BASE_PATH } from "../../../../shared/api/constants";
-import type { ResyncResponse } from "../types";
+import type { ApiResponse, ResyncResponse } from "../types";
 
 const RESYNC_URL = `${API_BASE_PATH}/system/resync`;
 
@@ -16,7 +16,7 @@ export interface ResyncPayload {
  * @param payload - Optional parameters to control the resync scope.
  */
 export const triggerSystemResync = (payload?: ResyncPayload) =>
-  request<ResyncResponse>({
+  request<ApiResponse<ResyncResponse>>({
     method: "POST",
     url: RESYNC_URL,
     data: payload ?? {},
@@ -26,7 +26,7 @@ export const triggerSystemResync = (payload?: ResyncPayload) =>
  * Hook returning a trigger function and state for the system resync action.
  */
 export const useSystemResync = () => {
-  const [data, setData] = useState<ResyncResponse | undefined>();
+  const [data, setData] = useState<ApiResponse<ResyncResponse> | undefined>();
   const [error, setError] = useState<unknown>();
   const [isLoading, setIsLoading] = useState(false);
 

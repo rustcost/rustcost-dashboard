@@ -1,12 +1,9 @@
-import { API_BASE_PATH, type MetricResource } from "../../../shared/api/constants";
 import {
-  request,
-  type MetricsQueryParams,
-} from "../../../shared/api/http";
-import {
-  buildMetricsQueryKey,
-  serializeMetricsParams,
-} from "../model/utils";
+  API_BASE_PATH,
+  type MetricResource,
+} from "../../../shared/api/constants";
+import { request, type MetricsQueryParams } from "../../../shared/api/http";
+import { buildMetricsQueryKey, serializeMetricsParams } from "../model/utils";
 import type {
   CostMetricPoint,
   EfficiencyMetric,
@@ -28,10 +25,8 @@ type SeriesKey = keyof SeriesMap;
 /**
  * Builds a REST path for the given metrics resource and data series.
  */
-const buildMetricsUrl = (
-  resource: MetricResource,
-  series: SeriesKey
-) => `${API_BASE_PATH}/metrics/${resource}/${series}`;
+const buildMetricsUrl = (resource: MetricResource, series: SeriesKey) =>
+  `${API_BASE_PATH}/metrics/${resource}/${series}`;
 
 /**
  * Factory that produces a typed fetcher for a metrics series.
@@ -40,7 +35,7 @@ const buildMetricsUrl = (
  * @param series - Metrics series identifier.
  */
 const makeRequest =
-  <S extends SeriesKey, T = SeriesMap[S]>(
+  <S extends SeriesKey, _T = SeriesMap[S]>(
     resource: MetricResource,
     series: S
   ) =>

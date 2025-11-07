@@ -1,69 +1,63 @@
+import { useCallback, useState } from "react";
 import { useFetch, type UseFetchOptions } from "../../../../shared/hooks/useFetch";
-import { createInfoResourceClient } from "../client";
-import type {
-  InfoQueryParams,
-  InfoResponse,
-  SettingsConfiguration,
-  SettingsMetadata,
-} from "../../model/types";
+import { API_BASE_PATH } from "../../../../shared/api/constants";
+import { request } from "../../../../shared/api/http";
+import type { InfoSetting } from "../../model/types";
+import type { ApiResponse } from "../../../system/api/types";
 
-const client = createInfoResourceClient<
-  SettingsMetadata,
-  SettingsConfiguration
->("settings");
-
-const withDeps = (
-  params: InfoQueryParams | undefined,
-  options?: UseFetchOptions
-): UseFetchOptions => ({
-  ...options,
-  deps: [JSON.stringify(params ?? {}), ...(options?.deps ?? [])],
-});
+const SETTINGS_URL = `${API_BASE_PATH}/info/settings`;
 
 /**
- * Fetches control-plane metadata and feature flags for RustCost.
+ * Fetch current Info settings.
  */
-export const fetchSettingsMetadata = (params?: InfoQueryParams) =>
-  client.metadata(params);
+export const fetchSettings = () =>
+  request<ApiResponse<InfoSetting>>({
+    method: "GET",
+    url: SETTINGS_URL,
+  });
 
 /**
- * Fetches configuration defaults (alerts, sampling, preferences).
+ * Upsert Info settings.
  */
-export const fetchSettingsConfiguration = (params?: InfoQueryParams) =>
-  client.configuration(params);
+export const upsertSettings = (payload: InfoSetting) =>
+  request<ApiResponse<unknown>>({
+    method: "POST",
+    url: SETTINGS_URL,
+    data: payload,
+  });
 
 /**
- * React hook that returns cached settings metadata.
+ * React hook to read Info settings with cache.
  */
-export const useSettingsMetadata = (
-  params?: InfoQueryParams,
-  options?: UseFetchOptions
-) =>
-  useFetch<InfoResponse<SettingsMetadata>>(
-    JSON.stringify({
-      scope: "info",
-      resource: "settings",
-      type: "metadata",
-      params,
-    }),
-    () => fetchSettingsMetadata(params),
-    withDeps(params, options)
+export const useSettings = (options?: UseFetchOptions) =>
+  useFetch<ApiResponse<InfoSetting>>(
+    JSON.stringify({ scope: "info", resource: "settings" }),
+    fetchSettings,
+    options
   );
 
 /**
- * React hook that returns cached settings configuration.
+ * Imperative hook to upsert Info settings.
  */
-export const useSettingsConfiguration = (
-  params?: InfoQueryParams,
-  options?: UseFetchOptions
-) =>
-  useFetch<InfoResponse<SettingsConfiguration>>(
-    JSON.stringify({
-      scope: "info",
-      resource: "settings",
-      type: "configuration",
-      params,
-    }),
-    () => fetchSettingsConfiguration(params),
-    withDeps(params, options)
-  );
+export const useUpsertSettings = () => {
+  const [data, setData] = useState<ApiResponse<unknown> | undefined>();
+  const [error, setError] = useState<unknown>();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const trigger = useCallback(async (payload: InfoSetting) => {
+    setIsLoading(true);
+    setError(undefined);
+    try {
+      const response = await upsertSettings(payload);
+      setData(response);
+      return response;
+    } catch (err) {
+      setError(err);
+      return undefined;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { trigger, data, error, isLoading };
+};

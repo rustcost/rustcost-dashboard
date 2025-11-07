@@ -1,3 +1,10 @@
+export interface ApiResponse<T> {
+  is_successful: boolean;
+  data?: T | null;
+  error_code?: string | null;
+  error_msg?: string | null;
+}
+
 export interface SystemComponentStatus {
   component: string;
   status: "healthy" | "degraded" | "warning" | "error" | "unknown";
