@@ -1,49 +1,34 @@
 import { useI18n } from "../../../app/providers/I18nProvider";
 import { InfoCard } from "../../../entities/info/ui/InfoCard";
-import {
-  useSettingsConfiguration,
-  useSettingsMetadata,
-} from "../../../entities/info/api/endpoints/settings";
+import { useSettings } from "../../../entities/info/api/endpoints/settings";
 
 export const SettingsPage = () => {
   const { t } = useI18n();
-  const metadata = useSettingsMetadata();
-  const configuration = useSettingsConfiguration();
+  const settings = useSettings();
+  console.log("hello");
+  console.log(settings);
+  const data = settings.data?.is_successful ? settings.data.data : null;
 
-  const metadataRows = metadata.data
+  const generalRows = data
     ? [
-        { label: "Default Currency", value: metadata.data.data.defaultCurrency },
-        { label: "Default Date Range", value: `${metadata.data.data.defaultDateRangeDays} days` },
-        {
-          label: "Notifications",
-          value: metadata.data.data.notificationsEnabled ? "Enabled" : "Disabled",
-        },
-        {
-          label: "Feature Flags",
-          value: Object.entries(metadata.data.data.featureFlags)
-            .map(([key, enabled]) => `${key}: ${enabled ? "on" : "off"}`)
-            .join(", "),
-        },
+        { label: "Language", value: data.language },
+        { label: "Dark Mode", value: data.is_dark_mode ? "On" : "Off" },
+        { label: "Version", value: data.version },
+        { label: "Updated", value: new Date(data.updated_at).toLocaleString() },
       ]
     : [];
 
-  const configurationRows = configuration.data
+  const metricsRows = data
     ? [
+        { label: "Scrape Interval (s)", value: data.scrape_interval_sec },
+        { label: "Batch Size", value: data.metrics_batch_size },
         {
-          label: "Cost Alert Threshold",
-          value: configuration.data.data.alerts.costThreshold,
+          label: "GPU Metrics",
+          value: data.enable_gpu_metrics ? "Enabled" : "Disabled",
         },
         {
-          label: "Efficiency Alert Threshold",
-          value: configuration.data.data.alerts.efficiencyThreshold,
-        },
-        {
-          label: "Sampling Interval (s)",
-          value: configuration.data.data.sampling.intervalSeconds,
-        },
-        {
-          label: "Retention (days)",
-          value: configuration.data.data.sampling.retentionDays,
+          label: "Network Metrics",
+          value: data.enable_network_metrics ? "Enabled" : "Disabled",
         },
       ]
     : [];
@@ -54,32 +39,38 @@ export const SettingsPage = () => {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
           {t("settings.title")}
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("settings.subtitle")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t("settings.subtitle")}
+        </p>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <InfoCard
-          title="Platform Defaults"
-          rows={metadataRows}
-          isLoading={metadata.isLoading}
+          title="General"
+          rows={generalRows}
+          isLoading={settings.isLoading}
           error={
-            metadata.error instanceof Error
-              ? metadata.error.message
-              : metadata.error
-                ? String(metadata.error)
-                : undefined
+            settings.error instanceof Error
+              ? settings.error.message
+              : settings.error
+              ? String(settings.error)
+              : !settings.data?.is_successful
+              ? settings.data?.error_msg ?? "Failed to load settings"
+              : undefined
           }
         />
         <InfoCard
-          title="Alerting & Sampling"
-          rows={configurationRows}
-          isLoading={configuration.isLoading}
+          title="Metrics & Retention"
+          rows={metricsRows}
+          isLoading={settings.isLoading}
           error={
-            configuration.error instanceof Error
-              ? configuration.error.message
-              : configuration.error
-                ? String(configuration.error)
-                : undefined
+            settings.error instanceof Error
+              ? settings.error.message
+              : settings.error
+              ? String(settings.error)
+              : !settings.data?.is_successful
+              ? settings.data?.error_msg ?? "Failed to load settings"
+              : undefined
           }
         />
       </div>
