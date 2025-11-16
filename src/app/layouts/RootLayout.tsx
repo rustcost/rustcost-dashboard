@@ -3,91 +3,175 @@ import { ThemeToggle } from "../../shared/components/ThemeToggle";
 import { useI18n } from "../providers/I18nProvider";
 import { SUPPORTED_LANGUAGES } from "../../i18n/i18n";
 import { useTheme } from "../providers/ThemeProvider";
+import { useState } from "react";
+
+import {
+  IoSpeedometerOutline,
+  IoTrendingUpOutline,
+  IoConstructOutline,
+  IoSettingsOutline,
+} from "react-icons/io5";
 
 const navItems = [
-  { to: "/", translationKey: "nav.dashboard" },
-  { to: "/trends", translationKey: "nav.trends" },
-  { to: "/efficiency", translationKey: "nav.efficiency" },
-  { to: "/settings", translationKey: "nav.settings" },
+  { to: "/", translationKey: "nav.dashboard", icon: IoSpeedometerOutline },
+  { to: "/trends", translationKey: "nav.trends", icon: IoTrendingUpOutline },
+  {
+    to: "/efficiency",
+    translationKey: "nav.efficiency",
+    icon: IoConstructOutline,
+  },
+  { to: "/settings", translationKey: "nav.settings", icon: IoSettingsOutline },
 ];
 
 export const RootLayout = () => {
   const { t, language, setLanguage } = useI18n();
   const { theme } = useTheme();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 transition-colors dark:bg-gray-950 dark:text-gray-100">
-      <header className="border-b border-gray-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <img
-              src="/logo.webp"
-              alt="RustCost"
-              className="h-10 w-10 rounded-md border border-amber-500/40 p-1"
-            />
-            <div>
-              <h1 className="text-lg font-semibold text-amber-600 dark:text-amber-400">
-                RustCost Dashboard
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {t("dashboard.subtitle")}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <select
-              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-              value={language}
-              onChange={(event) =>
-                setLanguage(event.target.value as (typeof SUPPORTED_LANGUAGES)[number])
-              }
-              aria-label="Select language"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang.toUpperCase()}
-                </option>
-              ))}
-            </select>
-            <ThemeToggle />
-          </div>
+    <div
+      className="
+        h-screen flex flex-col 
+        bg-[var(--bg)] text-[var(--text)]
+        dark:bg-[var(--bg)] dark:text-[var(--text)]
+        transition-colors
+      "
+    >
+      {/* ---------------- HEADER ---------------- */}
+      <header
+        className="
+          flex items-center justify-between px-4 py-3 
+          border-b border-[var(--border)]
+          bg-[var(--surface)]/70 backdrop-blur
+          dark:border-[var(--border)]
+          dark:bg-[var(--surface)]/70
+        "
+      >
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen((s) => !s)}
+            className="
+              p-2 rounded-md 
+              hover:bg-[var(--overlay)] 
+              dark:hover:bg-[var(--overlay)]
+              transition
+            "
+          >
+            <img src="/logo-square.webp" alt="Logo" className="h-6 w-6" />
+          </button>
+
+          <h1 className="text-lg font-semibold text-[var(--text)] dark:text-[var(-text)]">
+            RustCost
+          </h1>
         </div>
-        <nav className="mx-auto max-w-7xl px-6 pb-4">
-          <ul className="flex gap-3 text-sm font-medium text-gray-500 dark:text-gray-400">
-            {navItems.map(({ to, translationKey }) => (
-              <li key={to}>
-                <NavLink
-                  to={to}
-                  className={({ isActive }) =>
-                    [
-                      "rounded-md px-3 py-2 transition-colors",
-                      isActive
-                        ? "bg-amber-500/10 text-amber-600 dark:bg-amber-400/20 dark:text-amber-300"
-                        : "hover:bg-amber-500/10 hover:text-amber-600 dark:hover:bg-amber-400/10 dark:hover:text-amber-200",
-                    ].join(" ")
-                  }
-                  end={to === "/"}
-                >
-                  {t(translationKey as never)}
-                </NavLink>
-              </li>
+
+        <div className="flex items-center gap-3">
+          <select
+            className="
+              rounded-md border border-[var(--border)] 
+              bg-[var(--surface)]
+              px-2 py-1 text-sm shadow-sm
+              focus:border-[var(--primary)]
+              focus:ring-[var(--primary)]
+
+              dark:border-[var(--border)]
+              dark:bg-[var(--surface)]
+            "
+            value={language}
+            onChange={(e) =>
+              setLanguage(
+                e.target.value as (typeof SUPPORTED_LANGUAGES)[number]
+              )
+            }
+          >
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <option key={lang} value={lang}>
+                {lang.toUpperCase()}
+              </option>
             ))}
-          </ul>
-        </nav>
+          </select>
+
+          <ThemeToggle />
+        </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-6 py-6">
-        <Outlet />
-      </main>
+      {/* ---------------- LAYOUT ---------------- */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* ---------------- SIDEBAR ---------------- */}
+        <aside
+          className={`
+            ${sidebarOpen ? "w-64" : "w-16"}
+            transition-all duration-300
+            border-r border-[var(--border)]
+            bg-[var(--bg-muted)]/50 backdrop-blur
 
-      <footer className="border-t border-gray-200 bg-white/60 px-6 py-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900/80 dark:text-gray-400">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <span>&copy; {new Date().getFullYear()} RustCost</span>
-          <span className="text-xs uppercase tracking-wide">
-            Theme: {theme}
-          </span>
-        </div>
-      </footer>
+            dark:border-[var(--border)]
+            dark:bg-[var(--bg-muted)]/40
+            flex flex-col h-full
+          `}
+        >
+          <div className="p-4 text-center font-semibold text-[var(--primary)] dark:text-[var(--primary)]">
+            {sidebarOpen ? "Navigation" : null}
+          </div>
+
+          <nav className="flex-1 overflow-auto">
+            <ul className="flex flex-col gap-1 px-2">
+              {navItems.map(({ to, translationKey, icon: Icon }) => (
+                <li key={to}>
+                  <NavLink
+                    to={to}
+                    end={to === "/"}
+                    className={({ isActive }) =>
+                      `
+                        flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors
+                        ${
+                          isActive
+                            ? `
+                              bg-[var(--primary)]/20 
+                              text-[var(--primary)]
+                              dark:bg-[var(--primary)]/25
+                              dark:text-[var(--primary)]
+                            `
+                            : `
+                              text-[var(--text-muted)] 
+                              hover:text-[var(--primary)] 
+                              hover:bg-[var(--primary-hover)]/15
+                              dark:text-[var(--text-muted)]
+                              dark:hover:text-[var(--primary)]
+                              dark:hover:bg-[var(--primary-hover)]/20
+                            `
+                        }
+                      `
+                    }
+                  >
+                    <Icon className="text-xl min-w-[20px]" />
+                    {sidebarOpen && (
+                      <span className="truncate">
+                        {t(translationKey as never)}
+                      </span>
+                    )}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="p-3 text-center text-xs text-[var(--text-muted)] dark:text-[var(--text-muted)]">
+            {sidebarOpen ? `Theme: ${theme}` : null}
+          </div>
+        </aside>
+
+        {/* ---------------- CONTENT ---------------- */}
+        <main
+          className="
+            flex-1 overflow-auto p-6 
+            bg-[var(--bg)] text-[var(--text)]
+            dark:bg-[var(--bg)] dark:text-[var(--text)]
+          "
+        >
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };
