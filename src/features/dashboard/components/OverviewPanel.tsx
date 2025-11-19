@@ -1,6 +1,6 @@
 import type { EfficiencyMetric, SummaryMetric } from "../../metrics/types";
 import { useI18n } from "../../../app/providers/I18nProvider";
-import { formatCpu, formatBytes, formatPercent, sum, formatCurrency } from "../../../shared/lib/formatters";
+import { formatCpu, formatBytes, formatPercent, sum, formatCurrency } from "../../../shared/utils/format";
 
 interface OverviewPanelProps {
   nodes: SummaryMetric[];

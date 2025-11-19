@@ -15,6 +15,26 @@
   }
 }
 
+@layer utilities {
+  .animation-fade-scale {
+    animation: fadeScale 0.12s ease-out;
+  }
+  @keyframes fadeScale {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
 /* -------------------------------------------------------
    LIGHT THEME (default)
 -------------------------------------------------------- */

@@ -7,7 +7,7 @@ import {
   toSummaryMetrics,
   toTrendMetrics,
 } from "../../metrics/lib/transformers";
-import { getDefaultDateRange } from "../../../shared/lib/dateUtils";
+import { getDefaultDateRange } from "../../../shared/utils/date";
 import { DEFAULT_PAGE_SIZE } from "../../../shared/api/constants";
 import { useFetch } from "../../../shared/hooks/useFetch";
 
@@ -75,4 +75,3 @@ export const usePodsEfficiency = (params: MetricsQueryOptions) => {
     refetch,
   };
 };
-

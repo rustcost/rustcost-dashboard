@@ -1,6 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RootLayout } from "./layouts/RootLayout";
-import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { TrendsPage } from "../features/trends/pages/TrendsPage";
 import { EfficiencyPage } from "../features/efficiency/pages/EfficiencyPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
@@ -11,6 +10,7 @@ import { AllocationPage } from "../features/allocation/AllocationPage";
 import { MetricsPage } from "../features/metrics/MetricsPage";
 import { AlertsPage } from "../features/alerts/AlertsPage";
 import { SystemPage } from "../features/system/SystemPage";
+import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 
 const router = createBrowserRouter([
   {

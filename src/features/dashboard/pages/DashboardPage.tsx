@@ -1,173 +1,162 @@
-import { useMemo, useState } from "react";
-import { useI18n } from "../../../app/providers/I18nProvider";
-import { MetricChart } from "../../../shared/components/MetricChart";
-import { MetricTable } from "../../../shared/components/MetricTable";
+import { useMemo } from "react";
+import type { EfficiencyMetric, SummaryMetric } from "../../metrics/types";
+import { Chart, type ChartSeries } from "../../../shared/components/Chart";
+import { Table, type TableColumn } from "../../../shared/components/Table";
 import { SystemStatus } from "../../system/components/SystemStatus";
-import { OverviewPanel } from "../components/OverviewPanel";
-import {
-  createDefaultMetricsParams,
-  useNodesMetrics,
-  usePodsEfficiency,
-} from "../hooks/useMetrics";
-import { formatBytes, formatCpu, formatCurrency, formatPercent } from "../../../shared/lib/formatters";
+import { formatBytes, formatCpu, formatCurrency, formatPercent } from "../../../shared/utils/format";
+import { DashboardHeader } from "../components/DashboardHeader";
+import { MetricsFilterBar } from "../components/MetricsFilterBar";
+import { MetricsSummaryCards } from "../components/MetricsSummaryCards";
+import { CostEfficiencyCard } from "../components/CostEfficiencyCard";
+import { useDashboardMetrics } from "../hooks/useDashboardMetrics";
+import { useDashboardParams } from "../hooks/useDashboardParams";
+
+const POD_COLUMNS: TableColumn<EfficiencyMetric>[] = [
+  {
+    key: "name",
+    label: "Pod",
+    render: (item) => (
+      <div className="flex flex-col">
+        <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{item.id}</span>
+      </div>
+    ),
+  },
+  {
+    key: "efficiencyScore",
+    label: "Efficiency",
+    align: "right",
+    render: (item) => formatPercent(item.efficiencyScore ?? 0),
+    sortAccessor: (item) => item.efficiencyScore ?? 0,
+    efficiencyAccessor: (item) => item.efficiencyScore ?? 0,
+  },
+  {
+    key: "cpuEfficiency",
+    label: "CPU",
+    align: "right",
+    render: (item) => formatCpu(item.cpuEfficiency ?? 0),
+    sortAccessor: (item) => item.cpuEfficiency ?? 0,
+  },
+  {
+    key: "memoryEfficiency",
+    label: "Memory",
+    align: "right",
+    render: (item) => formatBytes(item.memoryEfficiency ?? 0),
+    sortAccessor: (item) => item.memoryEfficiency ?? 0,
+  },
+  {
+    key: "costEfficiency",
+    label: "Cost",
+    align: "right",
+    render: (item) => formatCurrency(item.costEfficiency ?? 0, "USD"),
+    sortAccessor: (item) => item.costEfficiency ?? 0,
+  },
+];
+
+const NODE_COLUMNS: TableColumn<SummaryMetric>[] = [
+  {
+    key: "name",
+    label: "Node",
+    render: (item) => (
+      <div className="flex flex-col">
+        <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{item.id}</span>
+      </div>
+    ),
+  },
+  {
+    key: "cpuUsage",
+    label: "CPU",
+    align: "right",
+    render: (item) => formatCpu(item.cpuUsage ?? 0),
+    sortAccessor: (item) => item.cpuUsage ?? 0,
+  },
+  {
+    key: "memoryUsage",
+    label: "Memory",
+    align: "right",
+    render: (item) => formatBytes(item.memoryUsage ?? 0),
+    sortAccessor: (item) => item.memoryUsage ?? 0,
+  },
+  {
+    key: "totalCost",
+    label: "Cost",
+    align: "right",
+    render: (item) => formatCurrency(item.totalCost ?? 0, "USD"),
+    sortAccessor: (item) => item.totalCost ?? 0,
+  },
+];
+
+const NODE_SERIES: ChartSeries<Record<string, unknown>>[] = [
+  { key: "cpuUsage", label: "CPU (mCores)", color: "#3b82f6", valueFormatter: (value) => formatCpu(value) },
+  { key: "memoryUsage", label: "Memory (Bytes)", color: "#10b981", valueFormatter: (value) => formatBytes(value) },
+];
 
 export const DashboardPage = () => {
-  const { t } = useI18n();
-  const [params, setParams] = useState(() => createDefaultMetricsParams());
+  const { params, updateParam } = useDashboardParams();
+  const { summary, trends, efficiency, nodesSummary, isLoading, nodesError, podsError, refetchAll } =
+    useDashboardMetrics(params);
 
-  const nodes = useNodesMetrics(params);
-  const pods = usePodsEfficiency({ ...params, sort: "efficiencyScore:desc" });
+  const chartData = trends ?? [];
+  const limit = params.limit ?? 25;
 
-  const chartSeries = useMemo(
-    () => [
-      { key: "cpuUsage" as const, label: "CPU (mCores)", color: "#f59e0b" },
-      { key: "memoryUsage" as const, label: "Memory (Bytes)", color: "#38bdf8" },
-    ],
-    []
-  );
+  const podEfficiencyRows = useMemo(() => efficiency.slice(0, limit), [efficiency, limit]);
 
-  const handleDateChange = (key: "start" | "end") => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  const handleLimitChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const limit = Number(event.target.value);
-    setParams((prev) => ({
-      ...prev,
-      limit,
-    }));
-  };
+  const nodeErrorMessage =
+    nodesError instanceof Error ? nodesError.message : typeof nodesError === "string" ? nodesError : undefined;
+  const podErrorMessage =
+    podsError instanceof Error ? podsError.message : typeof podsError === "string" ? podsError : undefined;
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-          {t("dashboard.title")}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("dashboard.subtitle")}</p>
-      </header>
+    <div className="flex flex-col gap-8">
+      <DashboardHeader onRefresh={refetchAll} />
 
-      <section className="flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-col">
-          <label className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t("common.date.start")}
-          </label>
-          <input
-            type="date"
-            value={params.start}
-            onChange={handleDateChange("start")}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t("common.date.end")}
-          </label>
-          <input
-            type="date"
-            value={params.end}
-            onChange={handleDateChange("end")}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t("common.limit")}
-          </label>
-          <select
-            value={params.limit}
-            onChange={handleLimitChange}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-          >
-            {[10, 25, 50, 100].map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            void Promise.all([nodes.refetch(), pods.refetch()]);
-          }}
-          className="ml-auto rounded-md border border-amber-500 px-4 py-2 text-sm font-medium text-amber-600 transition hover:bg-amber-500/10 dark:text-amber-300"
-        >
-          {t("common.refresh")}
-        </button>
-      </section>
+      <MetricsFilterBar params={params} onChange={updateParam} onRefresh={refetchAll} />
 
-      <OverviewPanel
-        nodes={nodes.data.summary}
-        pods={pods.data.summary}
-        efficiency={pods.data.efficiency}
-        isLoading={nodes.isLoading || pods.isLoading}
-      />
+      <MetricsSummaryCards summary={summary} isLoading={isLoading} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <MetricChart
-            title={t("dashboard.metrics.nodes")}
-            metrics={nodes.data.trends}
-            series={chartSeries}
-            isLoading={nodes.isLoading}
-            error={
-              nodes.error instanceof Error
-                ? nodes.error.message
-                : nodes.error
-                  ? String(nodes.error)
-                  : undefined
-            }
+          <Chart
+            title="Node CPU & Memory Usage"
+            subtitle="Cluster signals across the selected window"
+            metrics={chartData}
+            series={NODE_SERIES}
+            isLoading={isLoading}
+            error={nodeErrorMessage}
+            getXAxisLabel={(point: Record<string, unknown>) => {
+              const timestamp = (point.timestamp as string | undefined) ?? (point.time as string | undefined);
+              return timestamp ? new Date(timestamp).toLocaleString() : "";
+            }}
           />
         </div>
         <div className="lg:col-span-5">
-          <MetricTable
-            title={t("dashboard.metrics.pods")}
-            data={pods.data.efficiency.slice(0, params.limit ?? 10)}
-            columns={[
-              {
-                key: "name",
-                header: "Pod",
-                render: (item) => item.name,
-              },
-              {
-                key: "efficiency",
-                header: "Efficiency",
-                render: (item) => formatPercent(item.efficiencyScore),
-              },
-              {
-                key: "cpu",
-                header: "CPU",
-                align: "right",
-                render: (item) => formatCpu(item.cpuEfficiency ?? 0),
-              },
-              {
-                key: "memory",
-                header: "Memory",
-                align: "right",
-                render: (item) => formatBytes(item.memoryEfficiency ?? 0),
-              },
-              {
-                key: "cost",
-                header: "Cost",
-                align: "right",
-                render: (item) =>
-                  formatCurrency(item.costEfficiency ?? 0, "USD"),
-              },
-            ]}
-            isLoading={pods.isLoading}
-            error={
-              pods.error instanceof Error
-                ? pods.error.message
-                : pods.error
-                  ? String(pods.error)
-                  : undefined
-            }
+          <Table
+            title="Pod Efficiency"
+            subtitle="Top workloads by efficiency score"
+            data={podEfficiencyRows}
+            columns={POD_COLUMNS}
+            isLoading={isLoading}
+            error={podErrorMessage}
+            rowKey={(row) => row.id}
           />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <Table
+            title="Node Inventory"
+            subtitle="Resource utilization across nodes"
+            data={nodesSummary}
+            columns={NODE_COLUMNS}
+            isLoading={isLoading}
+            error={nodeErrorMessage}
+            rowKey={(row) => row.id}
+          />
+        </div>
+        <div className="lg:col-span-5">
+          <CostEfficiencyCard efficiency={efficiency} isLoading={isLoading} />
         </div>
       </div>
 

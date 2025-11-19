@@ -34,7 +34,7 @@ const LoadingSpinnerComponent = ({
         d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"
       />
     </svg>
-    <span>{label}…</span>
+    <span>{label}</span>
   </div>
 );
 
